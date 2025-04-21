@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Text Dir Area via CDN</title>
-  <script type="module" src="https://cdn.jsdelivr.net/gh/ShahroozD/bidi-textarea/index.js"></script>
+  <head>
+    <meta charset="UTF-8">
+    <title>Text Dir Area via CDN</title>
+    <script type="module" src="./index.js"></script>
 
-</head>
-<body>
-  <h3>custom bi direction textarea Box</h3>
-  <bidi-textarea id="myEditor"></bidi-textarea>
+  </head>
+  <body>
+    <h3>custom bi direction textarea Box</h3>
+    <bidi-textarea id="myEditor"></bidi-textarea>
 
-    <script>
-        const el = document.getElementById('myEditor');
+      <script>
+          const el = document.getElementById('myEditor');
 
-        el.addEventListener('input', () => {
-            console.log("Plain text:", el.text);
-        });
-    </script>
-</body>
+          window.addEventListener('DOMContentLoaded', () => {
+            el.value = "Hello world\nسلام دنیا\nBonjour le monde";
+          });  
+
+          el.addEventListener('input', () => {
+              console.log("Plain value:", el.value);
+          });
+      </script>
+  </body>
 </html>
