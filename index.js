@@ -120,7 +120,7 @@ class TextDirArea extends HTMLElement {
       this.editable.innerHTML = lines.map(line => {
         const clean = line.trim();
         const dir = this.detectDir(clean);
-        return <p dir="${dir}">${clean || '<br>'}</p>;
+        return `<p dir="${dir}">${clean || '<br>'}</p>`;
       }).join('');
     });
   }
