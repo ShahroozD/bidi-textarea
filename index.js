@@ -80,24 +80,25 @@ class TextDirArea extends HTMLElement {
       });
     }
   
-    // HTML value (rich)
+    // Get plain text like <textarea>
     get value() {
-      return this.editable.innerHTML.trim();
-    }
-  
-    // Set HTML content
-    set value(html) {
-      this.editable.innerHTML = html || '<p><br></p>';
-      this.updateDirs();
-    }
-  
-    // Plain text like a textarea
-    get text() {
       return Array.from(this.editable.querySelectorAll('p'))
         .map(p => p.textContent.trim())
-        .join('\n');
-    }
+        .join('\n');    }
   
+  
+    // Set plain text value (with \n) -> converts to <p>
+    set value(text) {
+      if (typeof text !== 'string') return;
+      const lines = text.split('\n');
+      const html = lines.map(line => {
+        const clean = line.trim();
+        const dir = this.detectDir(clean);
+        return <p dir="${dir}">${clean || '<br>'}</p>;
+      }).join('');
+      this.editable.innerHTML = html || '<p><br></p>';
+    }
+
     // Optional method: focus the editor
     focus() {
       this.editable.focus();
@@ -110,4 +111,3 @@ class TextDirArea extends HTMLElement {
   }
   
   customElements.define('bidi-textarea', TextDirArea);
-  
