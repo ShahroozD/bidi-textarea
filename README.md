@@ -23,7 +23,7 @@ https://cdn.jsdelivr.net/gh/ShahroozD/bidi-textarea/index.js
 ## Usage
 
 Simply use the <bidi-textarea> tag instead of a regular <textarea>:
-html
+```html
 <bidi-textarea id="myEditor"></bidi-textarea>
 
 <script type="module">
@@ -36,6 +36,7 @@ html
     });
   });
 </script>
+```
 
 > Make sure to set the value **after** the DOM is loaded (DOMContentLoaded), so the custom element is properly initialized.
 
