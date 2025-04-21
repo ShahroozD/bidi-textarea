@@ -15,12 +15,20 @@ class TextDirArea extends HTMLElement {
     shadow.innerHTML = `
       <div class="editable" contenteditable="true"></div>
       <style>
+        :host {
+          border: 1px solid #ccc;
+          height: 100%;
+          display: block;
+        }
         .editable {
           outline: none;
-          border: 1px solid #ccc;
+          border: none;
           padding: 10px;
+          box-sizing: border-box;
+          height: 100%;
           min-height: 150px;
-          max-width: 600px;
+          min-width: 90px;
+          width: 100%;
           white-space: pre-wrap;
         }
         .editable p {
@@ -112,7 +120,7 @@ class TextDirArea extends HTMLElement {
       this.editable.innerHTML = lines.map(line => {
         const clean = line.trim();
         const dir = this.detectDir(clean);
-        return `<p dir="${dir}">${clean || '<br>'}</p>`;
+        return <p dir="${dir}">${clean || '<br>'}</p>;
       }).join('');
     });
   }
