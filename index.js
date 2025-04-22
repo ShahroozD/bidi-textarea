@@ -5,6 +5,17 @@ class TextDirArea extends HTMLElement {
     this._isConnected = false;
   }
 
+
+  static get observedAttributes() {
+    return ['placeholder'];
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (name === 'placeholder') {
+      this._updatePlaceholderText();
+    }
+  }
+
   connectedCallback() {
     // Prevent re-initialization
     if (this._isConnected) return;
@@ -31,6 +42,14 @@ class TextDirArea extends HTMLElement {
           width: 100%;
           white-space: pre-wrap;
         }
+        .editable[data-empty="true"]::before {
+          content: attr(data-placeholder);
+          color: #aaa;
+          pointer-events: none;
+          display: block;
+          white-space: pre-wrap;
+          position: absolute;
+        }
         .editable p {
           margin: 0 0 10px;
         }
@@ -46,6 +65,7 @@ class TextDirArea extends HTMLElement {
     this.editable.addEventListener('input', () => {
       this.wrapCurrentLineInParagraph();
       this.updateDirs();
+      this._updatePlaceholderState();
       this.dispatchEvent(new Event('input'));
     });
 
@@ -56,12 +76,32 @@ class TextDirArea extends HTMLElement {
       }
     });
 
+    this._updatePlaceholderText();
+    this._updatePlaceholderState();
+
     // ✅ Apply any value set before connected
     if (this._pendingValue !== null) {
       const valueToApply = this._pendingValue;
       this._pendingValue = null;
       this.value = valueToApply;
     }
+  }
+
+  // Handle placeholder attribute
+  _updatePlaceholderText() {
+    const placeholder = this.getAttribute('placeholder') || '';
+    this.editable?.setAttribute('data-placeholder', placeholder);
+  }
+
+  _isVisuallyEmpty() {
+    const text = this.editable.textContent.trim();
+    const html = this.editable.innerHTML.replace(/\s+/g, '');
+    return text === '' || html === '<p><br></p>';
+  }
+
+  _updatePlaceholderState() {
+    const isEmpty = this._isVisuallyEmpty();
+    this.editable.setAttribute('data-empty', isEmpty ? 'true' : 'false');
   }
 
   detectDir(text) {
@@ -100,6 +140,14 @@ class TextDirArea extends HTMLElement {
     });
   }
 
+  get selectionStart() {
+    return this.getSelectionRange().start;
+  }
+  
+  get selectionEnd() {
+    return this.getSelectionRange().end;
+  }
+
   // Get plain text like a <textarea>
   get value() {
     if (!this.editable) return '';
@@ -122,7 +170,57 @@ class TextDirArea extends HTMLElement {
         const dir = this.detectDir(clean);
         return `<p dir="${dir}">${clean || '<br>'}</p>`;
       }).join('');
+      this._updatePlaceholderState();
     });
+  }
+
+  setSelectionRange(start, end = start) {
+    if (!this.editable) return;
+  
+    const range = document.createRange();
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+  
+    let currentPos = 0;
+    let startNode = null, endNode = null;
+    let startOffset = 0, endOffset = 0;
+  
+    const walker = document.createTreeWalker(
+      this.editable,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+  
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const len = node.textContent.length;
+  
+      if (!startNode && currentPos + len >= start) {
+        startNode = node;
+        startOffset = start - currentPos;
+      }
+  
+      if (!endNode && currentPos + len >= end) {
+        endNode = node;
+        endOffset = end - currentPos;
+        break;
+      }
+  
+      currentPos += len;
+    }
+  
+    // Fallback: if we couldn't find the right nodes
+    if (!startNode) startNode = this.editable;
+    if (!endNode) endNode = this.editable;
+  
+    try {
+      range.setStart(startNode, startOffset);
+      range.setEnd(endNode, endOffset);
+      selection.addRange(range);
+    } catch (e) {
+      console.warn('setSelectionRange failed:', e);
+    }
   }
 
   // Focus method
@@ -130,10 +228,19 @@ class TextDirArea extends HTMLElement {
     this.editable?.focus();
   }
 
+  blur() {
+    this.editable?.blur();
+  }
+
+  select() {
+    this.setSelectionRange(0, this.value.length);
+  }
+
   // Clear content
   clear() {
     if (this.editable) {
       this.editable.innerHTML = '<p><br></p>';
+      this._updatePlaceholderState();
     }
   }
 }

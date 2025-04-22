@@ -44,11 +44,14 @@ Simply use the <bidi-textarea> tag instead of a regular <textarea>:
 
 ## 🛠️ API
 
-| Property/Method | Description                            |
-|------------------|----------------------------------------|
-| value          | Plain text with \n line breaks       |
-| focus()        | Focus the editable content             |
-| clear()        | Clears all content                     |
+Property / Method | Description
+value | Get/set plain text value with \n line breaks
+text | Alias for .value
+focus() | Focus the editor
+blur() | Remove focus
+clear() | Clears all content
+setSelectionRange(start, end?) | Set cursor or selection range by character index
+placeholder attribute | Show hint text when empty
 
 ---
 
