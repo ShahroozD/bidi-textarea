@@ -7,12 +7,15 @@ class TextDirArea extends HTMLElement {
 
 
   static get observedAttributes() {
-    return ['placeholder'];
+    return ['placeholder','value'];
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
     if (name === 'placeholder') {
       this._updatePlaceholderText();
+    }
+    if (name === 'value') {
+      this.value = newVal;
     }
   }
 
@@ -85,6 +88,11 @@ class TextDirArea extends HTMLElement {
       this._pendingValue = null;
       this.value = valueToApply;
     }
+
+    // if HTML had a value="" attribute, apply it now:
+    if (this.hasAttribute('value')) {
+      this.value = this.getAttribute('value');
+    }
   }
 
   // Handle placeholder attribute
@@ -140,17 +148,10 @@ class TextDirArea extends HTMLElement {
     });
   }
 
-  get selectionStart() {
-    return this.getSelectionRange().start;
-  }
-  
-  get selectionEnd() {
-    return this.getSelectionRange().end;
-  }
-
   // Get plain text like a <textarea>
   get value() {
-    if (!this.editable) return '';
+    // until shadow DOM is wired up, hand back any pendingValue
+    if (!this.editable) return this._pendingValue || '';
     return Array.from(this.editable.querySelectorAll('p'))
       .map(p => p.textContent.trim())
       .join('\n');
@@ -158,20 +159,19 @@ class TextDirArea extends HTMLElement {
 
   // Set plain text value (handles early assignment)
   set value(text) {
+    // before connected, stash it
     if (!this.editable) {
       this._pendingValue = text;
       return;
     }
-
-    const lines = String(text || '').split('\n');
-    queueMicrotask(() => {
-      this.editable.innerHTML = lines.map(line => {
-        const clean = line.trim();
-        const dir = this.detectDir(clean);
-        return `<p dir="${dir}">${clean || '<br>'}</p>`;
-      }).join('');
-      this._updatePlaceholderState();
-    });
+    // once we have the editable, render immediately
+    const lines = String(text||'').split('\n');
+    this.editable.innerHTML = lines.map(line => {
+      const clean = line.trim();
+      const dir = this.detectDir(clean);
+      return `<p dir="${dir}">${clean||'<br>'}</p>`;
+    }).join('');
+    this._updatePlaceholderState();
   }
 
   setSelectionRange(start, end = start) {
