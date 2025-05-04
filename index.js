@@ -3,11 +3,12 @@ class BidiTextArea extends HTMLElement {
     super();
     this._pendingValue = null;
     this._isConnected = false;
+    this._defaultDirection = 'rtl';
   }
 
 
   static get observedAttributes() {
-    return ['placeholder','value'];
+    return ['placeholder','value','default-direction'];
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -16,6 +17,12 @@ class BidiTextArea extends HTMLElement {
     }
     if (name === 'value') {
       this.value = newVal;
+    }
+    else if (name === 'default-direction') {
+      // normalize to either "ltr" or "rtl" (default to "ltr" if invalid)
+      this._defaultDirection =
+        newVal === 'ltr' ? 'ltr' : 'rtl';
+      this.updateDirs();
     }
   }
 
@@ -114,7 +121,11 @@ class BidiTextArea extends HTMLElement {
 
   detectDir(text) {
     const rtlChar = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
-    return rtlChar.test(text) ? 'rtl' : 'ltr';
+    const hasRTL = rtlChar.test(text);
+    const dir = text === ''
+      ? this._defaultDirection
+      : (hasRTL ? 'rtl' : 'ltr');
+    return dir;
   }
 
   wrapCurrentLineInParagraph() {
@@ -129,6 +140,7 @@ class BidiTextArea extends HTMLElement {
       const offset = range.startOffset;
 
       const p = document.createElement('p');
+      p.setAttribute('dir', this._defaultDirection);
       p.appendChild(textNode);
       this.editable.replaceChild(p, textNode);
 
