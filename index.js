@@ -1,4 +1,4 @@
-class TextDirArea extends HTMLElement {
+class BidiTextArea extends HTMLElement {
   constructor() {
     super();
     this._pendingValue = null;
@@ -223,6 +223,78 @@ class TextDirArea extends HTMLElement {
     }
   }
 
+  get selectionStart() {
+    const sel = this.shadowRoot.getSelection
+      ? this.shadowRoot.getSelection()
+      : window.getSelection();
+    if (!sel.rangeCount) return 0;
+    
+    const range = sel.getRangeAt(0);
+    let pos = 0;
+  
+    // walk all text nodes to sum their lengths
+    const walker = document.createTreeWalker(
+      this.editable,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node === range.startContainer) {
+        pos += range.startOffset;
+        break;
+      }
+      pos += node.textContent.length;
+    }
+  
+    // ** NEW ** account for the '\n' between paragraphs
+    let newlineCount = 0;
+    const paragraphs = Array.from(this.editable.querySelectorAll('p'));
+    for (const p of paragraphs) {
+      if (p.contains(range.startContainer)) break;
+      newlineCount++;
+    }
+  
+    return pos + newlineCount;
+  }
+  
+  get selectionEnd() {
+    const sel = this.shadowRoot.getSelection
+      ? this.shadowRoot.getSelection()
+      : window.getSelection();
+    if (!sel.rangeCount) return 0;
+    
+    const range = sel.getRangeAt(0);
+    let pos = 0;
+  
+    // walk all text nodes to sum their lengths
+    const walker = document.createTreeWalker(
+      this.editable,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node === range.endContainer) {
+        pos += range.endOffset;
+        break;
+      }
+      pos += node.textContent.length;
+    }
+  
+    // ** NEW ** account for the '\n' between paragraphs
+    let newlineCount = 0;
+    const paragraphs = Array.from(this.editable.querySelectorAll('p'));
+    for (const p of paragraphs) {
+      if (p.contains(range.startContainer)) break;
+      newlineCount++;
+    }
+  
+    return pos + newlineCount;
+  }
+
   // Focus method
   focus() {
     this.editable?.focus();
@@ -245,4 +317,4 @@ class TextDirArea extends HTMLElement {
   }
 }
 
-customElements.define('bidi-textarea', TextDirArea);
+customElements.define('bidi-textarea', BidiTextArea);
